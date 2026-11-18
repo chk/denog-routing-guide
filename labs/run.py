@@ -209,7 +209,8 @@ class Lab:
             # FRR adds sequence numbers to prefix-list entries
             out = sh(["docker", "exec", self.container("dut"), "vtysh", "-c", "show running-config"]).stdout
             return {re.sub(r" seq \d+", "", l.strip()) for l in out.splitlines()}
-        out = self.vbash("show configuration commands").stdout
+        # operational mode commands need "run" in VyOS scripts
+        out = self.vbash("run show configuration commands").stdout
         return {l.strip().replace("'", "") for l in out.splitlines()}
 
     def version(self):
@@ -217,7 +218,7 @@ class Lab:
             return self.eos("show version").stdout.strip()
         if self.vendor_name == "frr":
             return sh(["docker", "exec", self.container("dut"), "vtysh", "-c", "show version"]).stdout.strip()
-        return self.vbash("show version").stdout.strip()
+        return self.vbash("run show version").stdout.strip()
 
     def established(self, node):
         summary = self.vtysh(node, "show bgp summary json")
@@ -242,7 +243,9 @@ class Lab:
         out = sh(["docker", "exec", self.container("dut"), "vtysh", "-c", f"show bgp {af} unicast {prefix} json"]).stdout
         paths = json.loads(out).get("paths", [])
         best = next((p for p in paths if p.get("bestpath", {}).get("overall")), None)
-        return best.get("locPrf") if best else None
+        # FRR leaves out locPrf when the attribute is not set (e.g. eBGP routes);
+        # BGP then uses the default local preference 100
+        return best.get("locPrf", 100) if best else None
 
     def attribute(self, prefix, field):
         """Current value of a route attribute; lists are sorted for comparison."""

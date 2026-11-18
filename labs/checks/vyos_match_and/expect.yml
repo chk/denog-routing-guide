@@ -1,0 +1,36 @@
+# Check: the existing VyOS example on default_route puts
+# "match ip address prefix-list" and "match ipv6 address prefix-list" into the
+# same route-map rule. VyOS uses FRR, which combines several match
+# statements with AND, so the rule would match no route (see
+# checks/frr_match_and). Case 1 uses the guide example ("not allowing default
+# routes") and is expected to FAIL if that is the case; case 2 is the
+# counter-check with one rule per address family.
+page: docs/guides/route_filtering/inbound/default_route.md
+tab: VyOS
+cases:
+  - name: guide example, reject the default route
+    blocks: [0, 2]
+    context:
+      vyos: |
+        set policy route-map prefixes-in rule 1000 action permit
+        set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import prefixes-in
+        set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import prefixes-in
+    accept: [203.0.113.0/24, "3fff::/20"]
+    reject: [0.0.0.0/0, "::/0"]
+  - name: counter-check, one rule per address family
+    snippet: |
+      set policy prefix-list default-route-v4 rule 5 action permit
+      set policy prefix-list default-route-v4 rule 5 prefix 0.0.0.0/0
+      set policy prefix-list6 default-route-v6 rule 5 action permit
+      set policy prefix-list6 default-route-v6 rule 5 prefix ::/0
+      set policy route-map prefixes-in rule 10 action deny
+      set policy route-map prefixes-in rule 10 match ip address prefix-list default-route-v4
+      set policy route-map prefixes-in rule 20 action deny
+      set policy route-map prefixes-in rule 20 match ipv6 address prefix-list default-route-v6
+    context:
+      vyos: |
+        set policy route-map prefixes-in rule 1000 action permit
+        set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import prefixes-in
+        set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import prefixes-in
+    accept: [203.0.113.0/24, "3fff::/20"]
+    reject: [0.0.0.0/0, "::/0"]

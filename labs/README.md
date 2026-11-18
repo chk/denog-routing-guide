@@ -71,7 +71,7 @@ the report, so it is always visible what was added to the published text.
 - For VyOS: a host kernel >= 6.3 (see [Known limits](#known-limits))
 
 The tests were developed with containerlab 0.82.0 and Docker 29.9 on
-Ubuntu 22.04.
+Ubuntu 22.04; the VyOS tests ran in an Ubuntu 24.04 VM (kernel 6.8).
 
 ## Preparing the images
 

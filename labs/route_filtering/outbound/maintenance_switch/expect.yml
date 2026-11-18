@@ -4,9 +4,13 @@ page: docs/guides/route_filtering/outbound/maintenance_switch.md
 cases:
   - name: switch configured but not active, routes are advertised
     blocks: [0]
+    context:
+      vyos: set policy route-map peer-out rule 1000 action permit
     accept: [203.0.113.0/24, "3fff::/20"]
   - name: switch active, no routes are advertised to the neighbor
     blocks: [0, 1]
+    context:
+      vyos: set policy route-map peer-out rule 1000 action permit
     reject: [203.0.113.0/24, "3fff::/20"]
     attributes:
       - {prefix: 203.0.113.0/24, field: local_pref, control: 100, test: 100}

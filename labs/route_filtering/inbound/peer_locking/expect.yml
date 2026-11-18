@@ -9,6 +9,7 @@ cases:
   - name: reject the locked ASN except on its direct session
     context:
       arista: route-map peer-in permit 1000
+      vyos: set policy route-map peer-in rule 1000 action permit
     accept: [203.0.113.0/24, "3fff::/20"]
     attributes:
       - {prefix: 192.0.2.0/24, field: local_pref, control: 100, test: null}

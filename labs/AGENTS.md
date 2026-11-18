@@ -119,6 +119,11 @@ Learned while building the labs; check these before you debug for hours.
 - StayRTR v0.6.4 speaks RTR v0/v1 only and cannot deliver ASPAs; the labs use
   RTRTR.
 - VyOS rolling needs a host kernel >= 6.3 (nftables `destroy`).
+- In VyOS scripts, operational mode commands need `run`
+  (`run show configuration commands`); without it they print nothing useful.
+- FRR (and VyOS) leave `locPrf` out of the JSON output when the attribute is
+  not set, e.g. for routes learned via eBGP; the runner reports the default
+  100 in that case.
 - The repository's `.editorconfig` requires indentation in multiples of two in
   YAML files, also inside block scalars with router configuration.
 
@@ -138,6 +143,12 @@ Learned while building the labs; check these before you debug for hours.
 - EOS ASPA needs the BGP role (`local-role`) of the session, RTR version 2,
   `aspa` on the RPKI cache, and an RCF function to drop
   `ASPA_INVALID`; without a role all routes of the neighbor are rejected.
+- VyOS validates large community list regexps: the pattern needs at least
+  two colons (`_64500:[0-9]+:[0-9]+_`, not `_64500:`).
+- VyOS has no maintenance mode and cannot disable a route-map rule; a switch
+  can be built with `call` and `on-match next` (see `maintenance_switch`).
+- The VyOS CLI (rolling 2026.11.15, FRR 10.7.1) has no options for ASPA,
+  TCP-AO or key chains for BGP; BGP neighbors only support MD5 passwords.
 - EOS TCP-AO does not support separate receive and transmit lifetimes (Arista
   TOI "BGP TCP Authentication Option (TCP-AO)"); with different ones the
   profile has no valid secrets and the session stays down. Use the single
