@@ -8,7 +8,6 @@ tags:
   - Mikrotik missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 # Set own informational communities
@@ -45,3 +44,17 @@ Add a community to routes imported from one session
     ```
 
     See the EOS manual: [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    Add a community to routes imported from one session, existing communities are kept (`add`):
+    ```
+    set policy route-map customer-in rule 10 action permit
+    set policy route-map customer-in rule 10 set community add 64500:220
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import customer-in
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import customer-in
+    ```
+
+    See the VyOS documentation: [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).

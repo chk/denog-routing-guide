@@ -6,7 +6,6 @@ tags:
   - Junos missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -159,3 +158,27 @@ With RPKI it is possible to validate the origin AS of a BGP announcement. This i
     ```
 
     See the Arista TOI [BGP Validation with Resource Public Key Infrastructure (RPKI)](https://www.arista.com/en/support/toi/eos-4-24-0f/14470-bgp-prefix-origin-validation-with-resource-public-key-infrastructure-rpki) (Arista account required).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    ```
+    set protocols rpki cache 198.51.100.5 port 3323
+    set protocols rpki cache 198.51.100.5 preference 1
+
+    # drop invalid prefixes
+    set policy route-map rpki rule 10 action deny
+    set policy route-map rpki rule 10 match rpki invalid
+    set policy route-map rpki rule 20 action permit
+    set policy route-map rpki rule 20 match rpki notfound
+    set policy route-map rpki rule 20 set local-preference 100
+    set policy route-map rpki rule 30 action permit
+    set policy route-map rpki rule 30 match rpki valid
+    set policy route-map rpki rule 30 set local-preference 200
+
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import rpki
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import rpki
+    ```
+
+    See the VyOS documentation: [RPKI](https://docs.vyos.io/en/latest/configuration/protocols/rpki.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).

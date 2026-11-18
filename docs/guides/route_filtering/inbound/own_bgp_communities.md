@@ -6,7 +6,6 @@ tags:
   - Mikrotik missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -161,3 +160,38 @@ Large community
     ```
 
     See the EOS manual: [Border Gateway Protocol (BGP)](https://www.arista.com/en/um-eos/eos-border-gateway-protocol-bgp) (community lists) and [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    Lists matching your own standard and large communities (replace 64500 with your ASN):
+    ```
+    set policy community-list own-communities rule 10 action permit
+    set policy community-list own-communities rule 10 regex _64500:[0-9]+_
+    set policy large-community-list own-large-communities rule 10 action permit
+    set policy large-community-list own-large-communities rule 10 regex _64500:[0-9]+:[0-9]+_
+    ```
+
+    If you want to drop the prefix. The route-map needs further `permit` rules, otherwise all other routes are denied as well:
+    ```
+    set policy route-map peer-in rule 10 action deny
+    set policy route-map peer-in rule 10 match community community-list own-communities
+    set policy route-map peer-in rule 20 action deny
+    set policy route-map peer-in rule 20 match large-community large-community-list own-large-communities
+    ```
+
+    If you want to delete the communities and accept the prefix:
+    ```
+    set policy route-map peer-in rule 10 action permit
+    set policy route-map peer-in rule 10 set community delete own-communities
+    set policy route-map peer-in rule 10 set large-community delete own-large-communities
+    ```
+
+    Apply the route-map to the neighbors:
+    ```
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import peer-in
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import peer-in
+    ```
+
+    See the VyOS documentation: [Community List](https://docs.vyos.io/en/latest/configuration/policy/community-list.html), [Large Community List](https://docs.vyos.io/en/latest/configuration/policy/large-community-list.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).

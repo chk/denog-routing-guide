@@ -3,7 +3,6 @@ tags:
   - FRR missing
   - Huawei VRP missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -200,3 +199,35 @@ Configuration examples:
     ```
 
     See the EOS manual: [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    Matching prefixes are denied; the default route is not matched (`ge 1`) and stays accepted.
+    ```
+    set policy prefix-list PREFIX-LENGTH-v4 rule 10 action permit
+    set policy prefix-list PREFIX-LENGTH-v4 rule 10 prefix 0.0.0.0/0
+    set policy prefix-list PREFIX-LENGTH-v4 rule 10 ge 25
+    set policy prefix-list PREFIX-LENGTH-v4 rule 10 le 32
+    set policy prefix-list PREFIX-LENGTH-v4 rule 20 action permit
+    set policy prefix-list PREFIX-LENGTH-v4 rule 20 prefix 0.0.0.0/0
+    set policy prefix-list PREFIX-LENGTH-v4 rule 20 ge 1
+    set policy prefix-list PREFIX-LENGTH-v4 rule 20 le 7
+
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 10 action permit
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 10 prefix ::/0
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 10 ge 49
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 10 le 128
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 20 action permit
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 20 prefix ::/0
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 20 ge 1
+    set policy prefix-list6 PREFIX-LENGTH-v6 rule 20 le 15
+
+    set policy route-map example-in rule 20 action deny
+    set policy route-map example-in rule 20 match ip address prefix-list PREFIX-LENGTH-v4
+    set policy route-map example-in rule 22 action deny
+    set policy route-map example-in rule 22 match ipv6 address prefix-list PREFIX-LENGTH-v6
+
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import example-in
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import example-in
+    ```
+
+    See the VyOS documentation: [Prefix List](https://docs.vyos.io/en/latest/configuration/policy/prefix-list.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html) (route-map import).

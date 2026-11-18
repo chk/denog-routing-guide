@@ -7,7 +7,6 @@ tags:
   - Junos missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -125,3 +124,49 @@ Be aware that you need to manually check the prefix list as you could peer with 
     ```
 
     See the EOS manual: [Border Gateway Protocol (BGP)](https://www.arista.com/en/um-eos/eos-border-gateway-protocol-bgp) (AS path access lists) and [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    The same list of ASNs as in the BIRD example. The route-map needs further `permit` rules, otherwise all other routes are denied as well.
+    ```
+    set policy as-path-list tier1-asns rule 10 action permit
+    set policy as-path-list tier1-asns rule 10 regex _174_
+    set policy as-path-list tier1-asns rule 20 action permit
+    set policy as-path-list tier1-asns rule 20 regex _701_
+    set policy as-path-list tier1-asns rule 30 action permit
+    set policy as-path-list tier1-asns rule 30 regex _1299_
+    set policy as-path-list tier1-asns rule 40 action permit
+    set policy as-path-list tier1-asns rule 40 regex _2914_
+    set policy as-path-list tier1-asns rule 50 action permit
+    set policy as-path-list tier1-asns rule 50 regex _3257_
+    set policy as-path-list tier1-asns rule 60 action permit
+    set policy as-path-list tier1-asns rule 60 regex _3320_
+    set policy as-path-list tier1-asns rule 70 action permit
+    set policy as-path-list tier1-asns rule 70 regex _3356_
+    set policy as-path-list tier1-asns rule 80 action permit
+    set policy as-path-list tier1-asns rule 80 regex _3491_
+    set policy as-path-list tier1-asns rule 90 action permit
+    set policy as-path-list tier1-asns rule 90 regex _4134_
+    set policy as-path-list tier1-asns rule 100 action permit
+    set policy as-path-list tier1-asns rule 100 regex _5511_
+    set policy as-path-list tier1-asns rule 110 action permit
+    set policy as-path-list tier1-asns rule 110 regex _6453_
+    set policy as-path-list tier1-asns rule 120 action permit
+    set policy as-path-list tier1-asns rule 120 regex _6461_
+    set policy as-path-list tier1-asns rule 130 action permit
+    set policy as-path-list tier1-asns rule 130 regex _6762_
+    set policy as-path-list tier1-asns rule 140 action permit
+    set policy as-path-list tier1-asns rule 140 regex _6830_
+    set policy as-path-list tier1-asns rule 150 action permit
+    set policy as-path-list tier1-asns rule 150 regex _7018_
+
+    set policy route-map peer-in rule 10 action deny
+    set policy route-map peer-in rule 10 match as-path tier1-asns
+
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import peer-in
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import peer-in
+    ```
+
+    See the VyOS documentation: [AS Path List](https://docs.vyos.io/en/latest/configuration/policy/as-path-list.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).

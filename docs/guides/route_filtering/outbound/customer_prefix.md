@@ -7,7 +7,6 @@ tags:
   - Mikrotik missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -168,3 +167,49 @@ Please make sure to filter the prefixes of your BGP customers directly on the BG
     ```
 
     See the EOS manual: [Border Gateway Protocol (BGP)](https://www.arista.com/en/um-eos/eos-border-gateway-protocol-bgp) (community lists) and [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    Prefix lists with the prefixes of your customer:
+    ```
+    set policy prefix-list customer-prefixes-v4 rule 10 action permit
+    set policy prefix-list customer-prefixes-v4 rule 10 prefix 203.0.113.0/24
+    set policy prefix-list6 customer-prefixes-v6 rule 10 action permit
+    set policy prefix-list6 customer-prefixes-v6 rule 10 prefix 3fff:100::/32
+    ```
+
+    Static approach, announce only the prefixes in the lists to the upstream:
+    ```
+    set policy route-map upstream-out rule 10 action permit
+    set policy route-map upstream-out rule 10 match ip address prefix-list customer-prefixes-v4
+    set policy route-map upstream-out rule 20 action permit
+    set policy route-map upstream-out rule 20 match ipv6 address prefix-list customer-prefixes-v6
+
+    set protocols bgp neighbor 198.51.100.3 address-family ipv4-unicast route-map export upstream-out
+    set protocols bgp neighbor 2001:db8:1::3 address-family ipv6-unicast route-map export upstream-out
+    ```
+
+    Dynamic approach with BGP communities, tag the prefixes on the customer session and announce everything tagged to the upstream:
+    ```
+    set policy community-list customer-routes rule 10 action permit
+    set policy community-list customer-routes rule 10 regex _64500:100_
+
+    set policy route-map customer-in rule 10 action permit
+    set policy route-map customer-in rule 10 match ip address prefix-list customer-prefixes-v4
+    set policy route-map customer-in rule 10 set community add 64500:100
+    set policy route-map customer-in rule 20 action permit
+    set policy route-map customer-in rule 20 match ipv6 address prefix-list customer-prefixes-v6
+    set policy route-map customer-in rule 20 set community add 64500:100
+
+    set policy route-map upstream-out rule 10 action permit
+    set policy route-map upstream-out rule 10 match community community-list customer-routes
+
+    set protocols bgp neighbor 198.51.100.1 address-family ipv4-unicast route-map import customer-in
+    set protocols bgp neighbor 2001:db8::1 address-family ipv6-unicast route-map import customer-in
+    set protocols bgp neighbor 198.51.100.3 address-family ipv4-unicast route-map export upstream-out
+    set protocols bgp neighbor 2001:db8:1::3 address-family ipv6-unicast route-map export upstream-out
+    ```
+
+    See the VyOS documentation: [Prefix List](https://docs.vyos.io/en/latest/configuration/policy/prefix-list.html), [Community List](https://docs.vyos.io/en/latest/configuration/policy/community-list.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).

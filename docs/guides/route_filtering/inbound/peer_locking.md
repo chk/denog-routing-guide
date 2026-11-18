@@ -9,7 +9,6 @@ tags:
   - Mikrotik missing
   - Nokia SR OS missing
   - OpenBGPD missing
-  - VyOS missing
   - RtBrick RBFS missing
 ---
 
@@ -41,3 +40,21 @@ A simpler variant, rejecting routes containing Tier 1 ASNs from customers and IX
     ```
 
     See the EOS manual: [Border Gateway Protocol (BGP)](https://www.arista.com/en/um-eos/eos-border-gateway-protocol-bgp) (AS path access lists) and [ACLs and Route Maps](https://www.arista.com/en/um-eos/eos-acls-and-route-maps).
+
+=== "VyOS"
+    VyOS has two modes (operational and configuration mode). Enter configuration mode with
+    `configure` to make changes. Use `commit` to apply them and `save` to keep them after reboot.
+
+    AS64496 is the locked peer. Apply the route-map to all eBGP sessions except the direct sessions with AS64496. The route-map needs further `permit` rules, otherwise all other routes are denied as well.
+    ```
+    set policy as-path-list peerlock-64496 rule 10 action permit
+    set policy as-path-list peerlock-64496 rule 10 regex _64496_
+
+    set policy route-map peer-in rule 5 action deny
+    set policy route-map peer-in rule 5 match as-path peerlock-64496
+
+    set protocols bgp neighbor 198.51.100.3 address-family ipv4-unicast route-map import peer-in
+    set protocols bgp neighbor 2001:db8:1::3 address-family ipv6-unicast route-map import peer-in
+    ```
+
+    See the VyOS documentation: [AS Path List](https://docs.vyos.io/en/latest/configuration/policy/as-path-list.html), [Route Map](https://docs.vyos.io/en/latest/configuration/policy/route-map.html) and [BGP](https://docs.vyos.io/en/latest/configuration/protocols/bgp.html).
